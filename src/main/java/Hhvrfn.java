@@ -1,8 +1,8 @@
 import java.util.Scanner;
 
 /**
- * A simple console-based echo chatbot.
- * Prints a greeting, echoes user input verbatim, and exits when the user types "bye".
+ * A simple console-based chatbot with task management features.
+ * Supports adding tasks, listing tasks, and marking/unmarking tasks as done.
  */
 public class Hhvrfn {
     private static final String LINE = "_".repeat(60) + System.lineSeparator();
@@ -11,25 +11,17 @@ public class Hhvrfn {
     private static final String FAREWELL = "Bye. Hope to see you again soon!";
     private static final int MAX_TASKS = 100;
 
-    // In-memory storage
-    private static final String[] tasks = new String[MAX_TASKS];
+    // Class-based storage
+    private static final Task[] tasks = new Task[MAX_TASKS];
     private static int taskCount = 0;
 
-    /**
-    * Prints a horizontal separator line of underscores.
-    */
     private static void printLine() {
         System.out.println(LINE);
     }
 
-    /**
-    * Adds a task (up to MAX_TASKS) and prints the feedback block.
-    *
-    * @param description the task description entered by the user
-    */
     private static void addTask(String description) {
         if (taskCount < MAX_TASKS) {
-            tasks[taskCount++] = description;
+            tasks[taskCount++] = new Task(description);
             printLine();
             System.out.println(" added: " + description);
             printLine();
@@ -40,10 +32,6 @@ public class Hhvrfn {
         }
     }
 
-    /**
-    * Lists all tasks stored in memory (1-based numbering), wrapped with separator lines.
-    * Prints nothing but separators if the list is empty.
-    */
     private static void listTasks() {
         printLine();
         for (int i = 0; i < taskCount; i++) {
@@ -52,9 +40,31 @@ public class Hhvrfn {
         printLine();
     }
 
+    private static void markTask(int index) {
+        if (index >= 1 && index <= taskCount) {
+            Task t = tasks[index - 1];
+            t.markAsDone();
+            printLine();
+            System.out.println(" Nice! I've marked this task as done:");
+            System.out.println("   " + t);
+            printLine();
+        }
+    }
+
+    private static void unmarkTask(int index) {
+        if (index >= 1 && index <= taskCount) {
+            Task t = tasks[index - 1];
+            t.markAsNotDone();
+            printLine();
+            System.out.println(" OK, I've marked this task as not done yet:");
+            System.out.println("   " + t);
+            printLine();
+        }
+    }
+
     /**
-    * Starts the chatbot application: prints greeting, stores user input,
-    * lists all items and exits when the user types "bye".
+    * Starts the chatbot application: prints greeting, reacts with user,
+    * and exits when the user types "bye".
     *
     * @param args command-line arguments (unused)
     */
@@ -74,6 +84,12 @@ public class Hhvrfn {
                     break;
                 } else if (input.equals("list")) {
                     listTasks();
+                } else if (input.startsWith("mark ")) {
+                    int index = Integer.parseInt(input.split(" ")[1]);
+                    markTask(index);
+                } else if (input.startsWith("unmark ")) {
+                    int index = Integer.parseInt(input.split(" ")[1]);
+                    unmarkTask(index);
                 } else {
                     addTask(input);
                 }
