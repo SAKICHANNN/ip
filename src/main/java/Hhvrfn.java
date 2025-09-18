@@ -169,11 +169,9 @@ public class Hhvrfn {
             return;
         }
 
-        if (!input.contains(" ")) {
-            throw new HhvrfnException(
-                    "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, bye.");
-        }
-
+        // Unknown input: commands only
+        throw new HhvrfnException(
+                "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, bye.");
     }
 
     private static int parseIndex(String input) throws HhvrfnException {
