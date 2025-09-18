@@ -15,7 +15,7 @@ public class Hhvrfn {
     // ArrayList-based storage
     private static final ArrayList<Task> tasks = new ArrayList<>();
     // Disk-based storage
-    private static final Storage storage = new Storage("./data/duke.txt");
+    private static final Storage storage = new Storage("./data/hhvrfn.txt");
 
     private static void printLine() {
         System.out.println(LINE);
@@ -31,6 +31,9 @@ public class Hhvrfn {
     }
 
     private static void markTask(int index) throws HhvrfnException {
+        if (tasks.isEmpty()) {
+            throw new HhvrfnException("Your list is empty.");
+        }
         if (index < 1 || index > tasks.size()) {
             throw new HhvrfnException("Invalid index for mark. Use 1.." + tasks.size());
         }
@@ -44,6 +47,9 @@ public class Hhvrfn {
     }
 
     private static void unmarkTask(int index) throws HhvrfnException {
+        if (tasks.isEmpty()) {
+            throw new HhvrfnException("Your list is empty.");
+        }
         if (index < 1 || index > tasks.size()) {
             throw new HhvrfnException("Invalid index for unmark. Use 1.." + tasks.size());
         }
@@ -56,7 +62,7 @@ public class Hhvrfn {
         storage.save(tasks);
     }
 
-    private static void addTodo(String description) {
+    private static void addTodo(String description) throws HhvrfnException {
         Todo t = new Todo(description);
         tasks.add(t);
         printLine();
@@ -64,16 +70,10 @@ public class Hhvrfn {
         System.out.println("   " + t);
         System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
         printLine();
-        try {
-            storage.save(tasks);
-        } catch (HhvrfnException e) {
-            printLine();
-            System.out.println(" " + e.getMessage());
-            printLine();
-        }
+        storage.save(tasks);
     }
 
-    private static void addDeadline(String description, String by) {
+    private static void addDeadline(String description, String by) throws HhvrfnException {
         Deadline t = new Deadline(description, by);
         tasks.add(t);
         printLine();
@@ -81,16 +81,10 @@ public class Hhvrfn {
         System.out.println("   " + t);
         System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
         printLine();
-        try {
-            storage.save(tasks);
-        } catch (HhvrfnException e) {
-            printLine();
-            System.out.println(" " + e.getMessage());
-            printLine();
-        }
+        storage.save(tasks);
     }
 
-    private static void addEvent(String description, String from, String to) {
+    private static void addEvent(String description, String from, String to) throws HhvrfnException {
         Event t = new Event(description, from, to);
         tasks.add(t);
         printLine();
@@ -98,17 +92,12 @@ public class Hhvrfn {
         System.out.println("   " + t);
         System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
         printLine();
-        try {
-            storage.save(tasks);
-        } catch (HhvrfnException e) {
-            printLine();
-            System.out.println(" " + e.getMessage());
-            printLine();
-        }
-        
+        storage.save(tasks);
     }
-
     private static void deleteTask(int index) throws HhvrfnException {
+        if (tasks.isEmpty()) {
+            throw new HhvrfnException("Your list is empty.");
+        }
         if (index < 1 || index > tasks.size()) {
             throw new HhvrfnException("Invalid index for delete. Use 1.." + tasks.size());
         }
@@ -130,11 +119,11 @@ public class Hhvrfn {
             listTasks();
             return;
         } else if (input.startsWith("mark ")) {
-            int index = Integer.parseInt(input.split(" ")[1]);
+            int index = parseIndex(input);
             markTask(index);
             return;
         } else if (input.startsWith("unmark ")) {
-            int index = Integer.parseInt(input.split(" ")[1]);
+            int index = parseIndex(input);
             unmarkTask(index);
             return;
         } else if (input.equals("todo")) {
@@ -149,25 +138,33 @@ public class Hhvrfn {
         } else if (input.startsWith("deadline ")) {
             String rest = input.substring(9).trim();
             int byPos = rest.indexOf("/by ");
-            if (byPos >= 0) {
-                String desc = rest.substring(0, byPos).trim();
-                String by = rest.substring(byPos + 4).trim();
-                addDeadline(desc, by);
-                return;
+            if (byPos < 0) {
+                throw new HhvrfnException("Usage: deadline DESCRIPTION /by BY");
             }
+            String desc = rest.substring(0, byPos).trim();
+            String by = rest.substring(byPos + 4).trim();
+            if (desc.isEmpty() || by.isEmpty()) {
+                throw new HhvrfnException("Deadline description and /by must be non-empty.");
+            }
+            addDeadline(desc, by);
+            return;
         } else if (input.startsWith("event ")) {
             String rest = input.substring(6).trim();
             int fromPos = rest.indexOf("/from ");
             int toPos = rest.indexOf("/to ");
-            if (fromPos >= 0 && toPos >= 0 && toPos > fromPos) {
-                String desc = rest.substring(0, fromPos).trim();
-                String from = rest.substring(fromPos + 6, toPos).trim();
-                String to = rest.substring(toPos + 4).trim();
-                addEvent(desc, from, to);
-                return;
+            if (fromPos < 0 || toPos < 0 || toPos <= fromPos) {
+                throw new HhvrfnException("Usage: event DESCRIPTION /from FROM /to TO");
             }
+            String desc = rest.substring(0, fromPos).trim();
+            String from = rest.substring(fromPos + 6, toPos).trim();
+            String to = rest.substring(toPos + 4).trim();
+            if (desc.isEmpty() || from.isEmpty() || to.isEmpty()) {
+                throw new HhvrfnException("Event description, /from, and /to must be non-empty.");
+            }
+            addEvent(desc, from, to);
+            return;
         } else if (input.startsWith("delete ")) {
-            int index = Integer.parseInt(input.split(" ")[1]);
+            int index = parseIndex(input);
             deleteTask(index);
             return;
         }
@@ -175,6 +172,23 @@ public class Hhvrfn {
         if (!input.contains(" ")) {
             throw new HhvrfnException(
                     "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, bye.");
+        }
+
+    }
+
+    private static int parseIndex(String input) throws HhvrfnException {
+        String[] parts = input.trim().split("\\s+");
+        if (parts.length != 2) {
+            throw new HhvrfnException("Usage: mark|unmark|delete <positive integer>");
+        }
+        try {
+            int idx = Integer.parseInt(parts[1]);
+            if (idx <= 0) {
+                throw new HhvrfnException("Index must be a positive integer.");
+            }
+            return idx;
+        } catch (NumberFormatException nfe) {
+            throw new HhvrfnException("Index must be a positive integer.");
         }
     }
 

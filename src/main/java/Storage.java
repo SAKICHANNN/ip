@@ -19,7 +19,7 @@ public class Storage {
     /**
      * Constructs a storage pointing to the given relative file path.
      *
-     * @param relativePath The relative path from project root (e.g., "./data/duke.txt").
+     * @param relativePath The relative path from project root (e.g., "./data/hhvrfn.txt").
      */
     public Storage(String relativePath) {
         this.dataFile = Paths.get(relativePath);
