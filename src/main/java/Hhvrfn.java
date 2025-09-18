@@ -14,16 +14,11 @@ public class Hhvrfn {
 
     // ArrayList-based storage
     private static final ArrayList<Task> tasks = new ArrayList<>();
+    // Disk-based storage
+    private static final Storage storage = new Storage("./data/duke.txt");
 
     private static void printLine() {
         System.out.println(LINE);
-    }
-    // Legacy method for adding tasks
-    private static void addTaskLegacy(String description) {
-        tasks.add(new Task(description, TaskType.TODO));
-        printLine();
-        System.out.println(" added: " + description);
-        printLine();
     }
 
     private static void listTasks() {
@@ -45,6 +40,7 @@ public class Hhvrfn {
         System.out.println(" Nice! I've marked this task as done:");
         System.out.println("   " + t);
         printLine();
+        storage.save(tasks);
     }
 
     private static void unmarkTask(int index) throws HhvrfnException {
@@ -57,6 +53,7 @@ public class Hhvrfn {
         System.out.println(" OK, I've marked this task as not done yet:");
         System.out.println("   " + t);
         printLine();
+        storage.save(tasks);
     }
 
     private static void addTodo(String description) {
@@ -67,6 +64,13 @@ public class Hhvrfn {
         System.out.println("   " + t);
         System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
         printLine();
+        try {
+            storage.save(tasks);
+        } catch (HhvrfnException e) {
+            printLine();
+            System.out.println(" " + e.getMessage());
+            printLine();
+        }
     }
 
     private static void addDeadline(String description, String by) {
@@ -77,6 +81,13 @@ public class Hhvrfn {
         System.out.println("   " + t);
         System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
         printLine();
+        try {
+            storage.save(tasks);
+        } catch (HhvrfnException e) {
+            printLine();
+            System.out.println(" " + e.getMessage());
+            printLine();
+        }
     }
 
     private static void addEvent(String description, String from, String to) {
@@ -87,6 +98,14 @@ public class Hhvrfn {
         System.out.println("   " + t);
         System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
         printLine();
+        try {
+            storage.save(tasks);
+        } catch (HhvrfnException e) {
+            printLine();
+            System.out.println(" " + e.getMessage());
+            printLine();
+        }
+        
     }
 
     private static void deleteTask(int index) throws HhvrfnException {
@@ -99,6 +118,7 @@ public class Hhvrfn {
         System.out.println("   " + removed);
         System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
         printLine();
+        storage.save(tasks);
     }
 
     private static void handleInput(String input) throws HhvrfnException {
@@ -156,8 +176,6 @@ public class Hhvrfn {
             throw new HhvrfnException(
                     "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, bye.");
         }
-
-        addTaskLegacy(input);
     }
 
     /**
@@ -172,6 +190,16 @@ public class Hhvrfn {
         printLine();
 
         try (Scanner scanner = new Scanner(System.in)) {
+            // Load tasks once at startup
+            try {
+                ArrayList<Task> loaded = storage.load();
+                tasks.clear();
+                tasks.addAll(loaded);
+            } catch (HhvrfnException e) {
+                printLine();
+                System.out.println(" " + e.getMessage());
+                printLine();
+            }
             while (true) {
                 String input = scanner.nextLine();
 
