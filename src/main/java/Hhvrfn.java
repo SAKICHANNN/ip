@@ -11,7 +11,6 @@ public class Hhvrfn {
     private static final String GREETING = "Hello! I'm hhvrfn" + System.lineSeparator()
             + "What can I do for you?";
     private static final String FAREWELL = "Bye. Hope to see you again soon!";
-    private static final int MAX_TASKS = 100;
 
     // ArrayList-based storage
     private static final ArrayList<Task> tasks = new ArrayList<>();
@@ -21,7 +20,7 @@ public class Hhvrfn {
     }
     // Legacy method for adding tasks
     private static void addTaskLegacy(String description) {
-        tasks.add(new Task(description));
+        tasks.add(new Task(description, TaskType.TODO));
         printLine();
         System.out.println(" added: " + description);
         printLine();

@@ -11,7 +11,7 @@ public class Deadline extends Task {
      * @param by The due time string.
      */
     public Deadline(String description, String by) {
-        super(description);
+        super(description, TaskType.DEADLINE);
         this.by = by;
     }
 
@@ -22,6 +22,6 @@ public class Deadline extends Task {
      */
     @Override
     public String toString() {
-        return "[D]" + super.toString() + " (by: " + by + ")";
+        return "[" + type + "][" + getStatusIcon() + "] " + description + " (by: " + by + ")";
     }
 }

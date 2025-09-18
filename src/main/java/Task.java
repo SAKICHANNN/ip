@@ -4,16 +4,19 @@
 public class Task {
     protected String description;
     protected boolean isDone;
+    protected TaskType type;
 
     /**
-     * Constructs a task with the given description.
+     * Constructs a task with the given description and type.
      * By default, the task is not done.
      *
      * @param description The description of the task.
+     * @param type        The task type.
      */
-    public Task(String description) {
+    public Task(String description, TaskType type) {
         this.description = description;
         this.isDone = false;
+        this.type = type;
     }
 
     /**
@@ -38,15 +41,22 @@ public class Task {
     public void markAsNotDone() {
         isDone = false;
     }
+    
+    /**
+     * Returns type of this task.
+     */
+    public TaskType getType() {
+        return type;
+    }
 
     /**
      * Returns the string representation of the task.
-     * Format: "[X] description" if done, "[ ] description" if not done.
+     * Format: "[{type}][{status}] {description}" where type is "T"/"D"/"E"
      *
      * @return The string representation of the task.
      */
     @Override
     public String toString() {
-        return "[" + getStatusIcon() + "] " + description;
+        return "[" + type + "][" + getStatusIcon() + "] " + description;
     }
 }
