@@ -112,12 +112,72 @@ public class Hhvrfn {
         }
     }
 
+    private static void handleInput(String input) throws HhvrfnException {
+        if (input == null || input.trim().isEmpty()) {
+            return; // ignore empty lines
+        }
+
+        if (input.equals("list")) {
+            listTasks();
+            return;
+        } else if (input.startsWith("mark ")) {
+            int index = Integer.parseInt(input.split(" ")[1]);
+            markTask(index);
+            return;
+        } else if (input.startsWith("unmark ")) {
+            int index = Integer.parseInt(input.split(" ")[1]);
+            unmarkTask(index);
+            return;
+        } else if (input.equals("todo")) {
+            // Error case 1: todo without description
+            throw new HhvrfnException("Todo needs a non-empty description.");
+        } else if (input.startsWith("todo ")) {
+            String desc = input.substring(5).trim();
+            if (desc.isEmpty()) {
+                throw new HhvrfnException("Todo needs a non-empty description.");
+            }
+            addTodo(desc);
+            return;
+        } else if (input.startsWith("deadline ")) {
+            String rest = input.substring(9).trim();
+            int byPos = rest.indexOf("/by ");
+            if (byPos >= 0) {
+                String desc = rest.substring(0, byPos).trim();
+                String by = rest.substring(byPos + 4).trim();
+                addDeadline(desc, by);
+                return;
+            }
+            // fallback to legacy add for malformed deadline
+        } else if (input.startsWith("event ")) {
+            String rest = input.substring(6).trim();
+            int fromPos = rest.indexOf("/from ");
+            int toPos = rest.indexOf("/to ");
+            if (fromPos >= 0 && toPos >= 0 && toPos > fromPos) {
+                String desc = rest.substring(0, fromPos).trim();
+                String from = rest.substring(fromPos + 6, toPos).trim();
+                String to = rest.substring(toPos + 4).trim();
+                addEvent(desc, from, to);
+                return;
+            }
+            // fallback to legacy add for malformed event
+        }
+
+        // Error case 2: unknown single-word command (e.g., "blah")
+        if (!input.contains(" ")) {
+            throw new HhvrfnException(
+                    "Unknown command. Try: list, todo, deadline, event, mark, unmark, bye.");
+        }
+
+        // Legacy: treat multi-word free text as task
+        addTaskLegacy(input);
+    }
+
     /**
-    * Starts the chatbot application: prints greeting, reacts with user,
-    * and exits when the user types "bye".
-    *
-    * @param args command-line arguments (unused)
-    */
+     * Starts the chatbot application.
+     * Greets the user, processes commands, and exits on "bye".
+     *
+     * @param args Command-line arguments (unused).
+     */
     public static void main(String[] args) {
         printLine();
         System.out.println(GREETING);
@@ -132,39 +192,14 @@ public class Hhvrfn {
                     System.out.println(FAREWELL);
                     printLine();
                     break;
-                } else if (input.equals("list")) {
-                    listTasks();
-                } else if (input.startsWith("mark ")) {
-                    int index = Integer.parseInt(input.split(" ")[1]);
-                    markTask(index);
-                } else if (input.startsWith("unmark ")) {
-                    int index = Integer.parseInt(input.split(" ")[1]);
-                    unmarkTask(index);
-                } else if (input.startsWith("todo ")) {
-                    String desc = input.substring(5).trim();
-                    if (!desc.isEmpty()) {
-                        addTodo(desc);
-                    }
-                } else if (input.startsWith("deadline ")) {
-                    String rest = input.substring(9).trim();
-                    int byPos = rest.indexOf("/by ");
-                    if (byPos >= 0) {
-                        String desc = rest.substring(0, byPos).trim();
-                        String by = rest.substring(byPos + 4).trim();
-                        addDeadline(desc, by);
-                    }
-                } else if (input.startsWith("event ")) {
-                    String rest = input.substring(6).trim();
-                    int fromPos = rest.indexOf("/from ");
-                    int toPos = rest.indexOf("/to ");
-                    if (fromPos >= 0 && toPos >= 0 && toPos > fromPos) {
-                        String desc = rest.substring(0, fromPos).trim();
-                        String from = rest.substring(fromPos + 6, toPos).trim();
-                        String to = rest.substring(toPos + 4).trim();
-                        addEvent(desc, from, to);
-                    }
-                } else {
-                    addTaskLegacy(input);
+                }
+
+                try {
+                    handleInput(input);
+                } catch (HhvrfnException e) {
+                    printLine();
+                    System.out.println(" " + e.getMessage());
+                    printLine();
                 }
             }
         }
