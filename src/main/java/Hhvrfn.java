@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
@@ -12,104 +13,93 @@ public class Hhvrfn {
     private static final String FAREWELL = "Bye. Hope to see you again soon!";
     private static final int MAX_TASKS = 100;
 
-    // Class-based storage
-    private static final Task[] tasks = new Task[MAX_TASKS];
-    private static int taskCount = 0;
+    // ArrayList-based storage
+    private static final ArrayList<Task> tasks = new ArrayList<>();
 
     private static void printLine() {
         System.out.println(LINE);
     }
     // Legacy method for adding tasks
     private static void addTaskLegacy(String description) {
-        if (taskCount < MAX_TASKS) {
-            tasks[taskCount++] = new Task(description);
-            printLine();
-            System.out.println(" added: " + description);
-            printLine();
-        } else {
-            printLine();
-            System.out.println(" storage full: cannot add more than " + MAX_TASKS + " tasks");
-            printLine();
-        }
+        tasks.add(new Task(description));
+        printLine();
+        System.out.println(" added: " + description);
+        printLine();
     }
 
     private static void listTasks() {
         printLine();
         System.out.println(" Here are the tasks in your list:");
-        for (int i = 0; i < taskCount; i++) {
-            System.out.println(" " + (i + 1) + ". " + tasks[i]);
+        for (int i = 0; i < tasks.size(); i++) {
+            System.out.println(" " + (i + 1) + ". " + tasks.get(i));
         }
         printLine();
     }
 
-    private static void markTask(int index) {
-        if (index >= 1 && index <= taskCount) {
-            Task t = tasks[index - 1];
-            t.markAsDone();
-            printLine();
-            System.out.println(" Nice! I've marked this task as done:");
-            System.out.println("   " + t);
-            printLine();
+    private static void markTask(int index) throws HhvrfnException {
+        if (index < 1 || index > tasks.size()) {
+            throw new HhvrfnException("Invalid index for mark. Use 1.." + tasks.size());
         }
+        Task t = tasks.get(index - 1);
+        t.markAsDone();
+        printLine();
+        System.out.println(" Nice! I've marked this task as done:");
+        System.out.println("   " + t);
+        printLine();
     }
 
-    private static void unmarkTask(int index) {
-        if (index >= 1 && index <= taskCount) {
-            Task t = tasks[index - 1];
-            t.markAsNotDone();
-            printLine();
-            System.out.println(" OK, I've marked this task as not done yet:");
-            System.out.println("   " + t);
-            printLine();
+    private static void unmarkTask(int index) throws HhvrfnException {
+        if (index < 1 || index > tasks.size()) {
+            throw new HhvrfnException("Invalid index for unmark. Use 1.." + tasks.size());
         }
+        Task t = tasks.get(index - 1);
+        t.markAsNotDone();
+        printLine();
+        System.out.println(" OK, I've marked this task as not done yet:");
+        System.out.println("   " + t);
+        printLine();
     }
 
     private static void addTodo(String description) {
-        if (taskCount < MAX_TASKS) {
-            Todo t = new Todo(description);
-            tasks[taskCount++] = t;
-            printLine();
-            System.out.println(" Got it. I've added this task:");
-            System.out.println("   " + t);
-            System.out.println(" Now you have " + taskCount + " tasks in the list.");
-            printLine();
-        } else {
-            printLine();
-            System.out.println(" storage full: cannot add more than " + MAX_TASKS + " tasks");
-            printLine();
-        }
+        Todo t = new Todo(description);
+        tasks.add(t);
+        printLine();
+        System.out.println(" Got it. I've added this task:");
+        System.out.println("   " + t);
+        System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
+        printLine();
     }
 
     private static void addDeadline(String description, String by) {
-        if (taskCount < MAX_TASKS) {
-            Deadline t = new Deadline(description, by);
-            tasks[taskCount++] = t;
-            printLine();
-            System.out.println(" Got it. I've added this task:");
-            System.out.println("   " + t);
-            System.out.println(" Now you have " + taskCount + " tasks in the list.");
-            printLine();
-        } else {
-            printLine();
-            System.out.println(" storage full: cannot add more than " + MAX_TASKS + " tasks");
-            printLine();
-        }
+        Deadline t = new Deadline(description, by);
+        tasks.add(t);
+        printLine();
+        System.out.println(" Got it. I've added this task:");
+        System.out.println("   " + t);
+        System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
+        printLine();
     }
 
     private static void addEvent(String description, String from, String to) {
-        if (taskCount < MAX_TASKS) {
-            Event t = new Event(description, from, to);
-            tasks[taskCount++] = t;
-            printLine();
-            System.out.println(" Got it. I've added this task:");
-            System.out.println("   " + t);
-            System.out.println(" Now you have " + taskCount + " tasks in the list.");
-            printLine();
-        } else {
-            printLine();
-            System.out.println(" storage full: cannot add more than " + MAX_TASKS + " tasks");
-            printLine();
+        Event t = new Event(description, from, to);
+        tasks.add(t);
+        printLine();
+        System.out.println(" Got it. I've added this task:");
+        System.out.println("   " + t);
+        System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
+        printLine();
+    }
+
+    private static void deleteTask(int index) throws HhvrfnException {
+        if (index < 1 || index > tasks.size()) {
+            throw new HhvrfnException("Invalid index for delete. Use 1.." + tasks.size());
         }
+        Task removed = tasks.remove(index - 1);
+        printLine();
+        System.out.println(" Noted. I've removed this task:");
+        System.out.println("   " + removed);
+        System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
+        printLine();
     }
 
     private static void handleInput(String input) throws HhvrfnException {
@@ -129,7 +119,6 @@ public class Hhvrfn {
             unmarkTask(index);
             return;
         } else if (input.equals("todo")) {
-            // Error case 1: todo without description
             throw new HhvrfnException("Todo needs a non-empty description.");
         } else if (input.startsWith("todo ")) {
             String desc = input.substring(5).trim();
@@ -147,7 +136,6 @@ public class Hhvrfn {
                 addDeadline(desc, by);
                 return;
             }
-            // fallback to legacy add for malformed deadline
         } else if (input.startsWith("event ")) {
             String rest = input.substring(6).trim();
             int fromPos = rest.indexOf("/from ");
@@ -159,16 +147,17 @@ public class Hhvrfn {
                 addEvent(desc, from, to);
                 return;
             }
-            // fallback to legacy add for malformed event
+        } else if (input.startsWith("delete ")) {
+            int index = Integer.parseInt(input.split(" ")[1]);
+            deleteTask(index);
+            return;
         }
 
-        // Error case 2: unknown single-word command (e.g., "blah")
         if (!input.contains(" ")) {
             throw new HhvrfnException(
-                    "Unknown command. Try: list, todo, deadline, event, mark, unmark, bye.");
+                    "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, bye.");
         }
 
-        // Legacy: treat multi-word free text as task
         addTaskLegacy(input);
     }
 
