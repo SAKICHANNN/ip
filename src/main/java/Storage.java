@@ -4,7 +4,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+
 
 /**
  * Handles persisting tasks to disk and loading them at startup.
@@ -84,7 +87,8 @@ public class Storage {
         String done = t.getStatusIcon().equals("X") ? "1" : "0";
         if (t instanceof Deadline) {
             Deadline d = (Deadline) t;
-            return "D | " + done + " | " + d.description + " | " + d.by;
+            // persist ISO format: yyyy-MM-dd
+            return "D | " + done + " | " + d.description + " | " + d.by.format(DateTimeFormatter.ISO_LOCAL_DATE);
         } else if (t instanceof Event) {
             Event e = (Event) t;
             return "E | " + done + " | " + e.description + " | " + e.from + " to " + e.to;
@@ -120,7 +124,8 @@ public class Storage {
                 if (parts.length < 4) {
                     return null;
                 }
-                t = new Deadline(desc, parts[3]);
+                LocalDate by = LocalDate.parse(parts[3]); // expect ISO yyyy-MM-dd
+                t = new Deadline(desc, by);
                 break;
             case "E":
                 if (parts.length < 4) {
