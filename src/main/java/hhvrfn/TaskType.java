@@ -1,3 +1,5 @@
+package hhvrfn;
+
 /**
  * Represents the type of a Task.
  */
