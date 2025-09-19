@@ -6,130 +6,200 @@ import java.util.List;
 
 /**
  * Parses and executes a single user command against the given model/components.
- * This is a minimal Parser (no Command classes yet).
+ * This parser dispatches to small handlers and preserves existing behavior.
  */
 public final class Parser {
-    private Parser() {}
+
+    /* ================== Centralized messages & usages ================== */
+
+    private static final String MSG_UNKNOWN =
+            "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, bye.";
+    private static final String MSG_EMPTY_LIST = "Your list is empty.";
+    private static final String ERR_TODO_EMPTY = "Todo needs a non-empty description.";
+    private static final String ERR_FIND_EMPTY = "Find needs a non-empty keyword.";
+    private static final String ERR_DEADLINE_EMPTY = "Deadline description and /by must be non-empty.";
+    private static final String ERR_EVENT_EMPTY = "Event description, /from, and /to must be non-empty.";
+    private static final String ERR_DATE_INVALID = "Invalid date. Use yyyy-MM-dd, e.g., 2019-10-15.";
+
+    private static final String USAGE_MUTATE_INDEX = "Usage: mark|unmark|delete <positive integer>";
+    private static final String USAGE_DEADLINE = "Usage: deadline DESCRIPTION /by yyyy-MM-dd";
+    private static final String USAGE_EVENT = "Usage: event DESCRIPTION /from FROM /to TO";
+
+    /** Utility class; no instantiation. */
+    private Parser() { }
 
     /**
-     * Processes one input line. On success, prints via Ui and saves via Storage if mutated.
+     * Processes one input line and executes the corresponding action.
+     * On success, UI is updated and mutations are persisted via {@code storage}.
      *
-     * @param input   Raw user input.
-     * @param tasks   Task list.
-     * @param ui      UI facade.
-     * @param storage Storage to persist changes.
-     * @throws HhvrfnException For user errors or I/O errors reported in a user-friendly way.
+     * @param input   raw user input
+     * @param tasks   task list model
+     * @param ui      UI facade to render results
+     * @param storage storage used to persist mutations
+     * @throws HhvrfnException if user input is invalid or a recoverable I/O error occurs
      */
     public static void process(String input, TaskList tasks, Ui ui, Storage storage) throws HhvrfnException {
+        assert tasks != null && ui != null && storage != null
+                : "Parser.process(): collaborators must be non-null";
+
         if (input == null || input.trim().isEmpty()) {
-            return; // ignore empty lines
+            // Ignore empty lines.
+            return;
         }
 
         if (input.equals("list")) {
-            ui.showList(tasks);
+            handleList(tasks, ui);
             return;
-        } else if (input.startsWith("mark ")) {
-            int index = parseIndex(input);
-            ensureNotEmpty(tasks, "Your list is empty.");
-            ensureInRange(index, tasks.size(), "Invalid index for mark. Use 1.." + tasks.size());
-            Task t = tasks.get(index - 1);
-            t.markAsDone();
-            ui.showMarked(t);
-            storage.save(tasks.asList());
+        }
+        if (input.startsWith("mark ")) {
+            handleMark(input, tasks, ui, storage);
             return;
-        } else if (input.startsWith("unmark ")) {
-            int index = parseIndex(input);
-            ensureNotEmpty(tasks, "Your list is empty.");
-            ensureInRange(index, tasks.size(), "Invalid index for unmark. Use 1.." + tasks.size());
-            Task t = tasks.get(index - 1);
-            t.markAsNotDone();
-            ui.showUnmarked(t);
-            storage.save(tasks.asList());
+        }
+        if (input.startsWith("unmark ")) {
+            handleUnmark(input, tasks, ui, storage);
             return;
-        } else if (input.equals("todo")) {
-            throw new HhvrfnException("Todo needs a non-empty description.");
-        } else if (input.startsWith("todo ")) {
-            String desc = input.substring(5).trim();
-            if (desc.isEmpty()) {
-                throw new HhvrfnException("Todo needs a non-empty description.");
-            }
-            Task t = new Todo(desc);
-            tasks.add(t);
-            ui.showAdded(t, tasks.size());
-            storage.save(tasks.asList());
+        }
+        if (input.equals("todo") || input.startsWith("todo ")) {
+            handleTodo(input, tasks, ui, storage);
             return;
-        } else if (input.startsWith("deadline ")) {
-            String rest = input.substring(9).trim();
-            int byPos = rest.indexOf("/by ");
-            if (byPos < 0) {
-                throw new HhvrfnException("Usage: deadline DESCRIPTION /by yyyy-MM-dd");
-            }
-            String desc = rest.substring(0, byPos).trim();
-            String by = rest.substring(byPos + 4).trim();
-            if (desc.isEmpty() || by.isEmpty()) {
-                throw new HhvrfnException("Deadline description and /by must be non-empty.");
-            }
-            try {
-                LocalDate date = LocalDate.parse(by); // L8: yyyy-MM-dd
-                Task t = new Deadline(desc, date);
-                tasks.add(t);
-                ui.showAdded(t, tasks.size());
-                storage.save(tasks.asList());
-                return;
-            } catch (DateTimeParseException dtpe) {
-                throw new HhvrfnException("Invalid date. Use yyyy-MM-dd, e.g., 2019-10-15.");
-            }
-        } else if (input.startsWith("event ")) {
-            String rest = input.substring(6).trim();
-            int fromPos = rest.indexOf("/from ");
-            int toPos = rest.indexOf("/to ");
-            if (fromPos < 0 || toPos < 0 || toPos <= fromPos) {
-                throw new HhvrfnException("Usage: event DESCRIPTION /from FROM /to TO");
-            }
-            String desc = rest.substring(0, fromPos).trim();
-            String from = rest.substring(fromPos + 6, toPos).trim();
-            String to = rest.substring(toPos + 4).trim();
-            if (desc.isEmpty() || from.isEmpty() || to.isEmpty()) {
-                throw new HhvrfnException("Event description, /from, and /to must be non-empty.");
-            }
-            Task t = new Event(desc, from, to); // L8: Event still uses String
-            tasks.add(t);
-            ui.showAdded(t, tasks.size());
-            storage.save(tasks.asList());
+        }
+        if (input.startsWith("deadline ")) {
+            handleDeadline(input, tasks, ui, storage);
             return;
-        } else if (input.startsWith("delete ")) {
-            int index = parseIndex(input);
-            ensureNotEmpty(tasks, "Your list is empty.");
-            ensureInRange(index, tasks.size(), "Invalid index for delete. Use 1.." + tasks.size());
-            Task removed = tasks.remove(index - 1);
-            ui.showDeleted(removed, tasks.size());
-            storage.save(tasks.asList());
+        }
+        if (input.startsWith("event ")) {
+            handleEvent(input, tasks, ui, storage);
             return;
-        } else if (input.equals("find")) {
-            throw new HhvrfnException("Find needs a non-empty keyword.");
-        } else if (input.startsWith("find ")) {
-            String keyword = input.substring(5).trim();
-            if (keyword.isEmpty()) {
-                throw new HhvrfnException("Find needs a non-empty keyword.");
-            }
-            List<Task> matches = tasks.findByKeyword(keyword);
-            ui.showFindResults(matches);
+        }
+        if (input.startsWith("delete ")) {
+            handleDelete(input, tasks, ui, storage);
+            return;
+        }
+        if (input.equals("find") || input.startsWith("find ")) {
+            handleFind(input, tasks, ui);
             return;
         }
 
-        throw new HhvrfnException(
-                "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, bye.");
+        throw new HhvrfnException(MSG_UNKNOWN);
     }
 
-    // --- helpers ---
+    /* ============================= Handlers ============================ */
 
-    private static int parseIndex(String input) throws HhvrfnException {
-        String[] parts = input.trim().split("\\s+");
-        if (parts.length != 2) {
-            throw new HhvrfnException("Usage: mark|unmark|delete <positive integer>");
+    // Shows the full list; no persistence.
+    private static void handleList(TaskList tasks, Ui ui) {
+        ui.showList(tasks);
+    }
+
+    // Marks a task as done and persists.
+    private static void handleMark(String input, TaskList tasks, Ui ui, Storage storage) throws HhvrfnException {
+        final int index = parseIndex(input);
+        ensureNotEmpty(tasks, MSG_EMPTY_LIST);
+        ensureInRange(index, tasks.size(), "Invalid index for mark. Use 1.." + tasks.size());
+        final Task t = tasks.get(index - 1);
+        t.markAsDone();
+        ui.showMarked(t);
+        storage.save(tasks.asList());
+    }
+
+    // Marks a task as not done and persists.
+    private static void handleUnmark(String input, TaskList tasks, Ui ui, Storage storage) throws HhvrfnException {
+        final int index = parseIndex(input);
+        ensureNotEmpty(tasks, MSG_EMPTY_LIST);
+        ensureInRange(index, tasks.size(), "Invalid index for unmark. Use 1.." + tasks.size());
+        final Task t = tasks.get(index - 1);
+        t.markAsNotDone();
+        ui.showUnmarked(t);
+        storage.save(tasks.asList());
+    }
+
+    // Adds a TODO and persists. Handles both "todo" and "todo xxx".
+    private static void handleTodo(String input, TaskList tasks, Ui ui, Storage storage) throws HhvrfnException {
+        final String desc = input.equals("todo") ? "" : input.substring(5).trim();
+        if (desc.isEmpty()) {
+            throw new HhvrfnException(ERR_TODO_EMPTY);
+        }
+        final Task t = new Todo(desc);
+        tasks.add(t);
+        ui.showAdded(t, tasks.size());
+        storage.save(tasks.asList());
+    }
+
+    // Adds a Deadline and persists.
+    private static void handleDeadline(String input, TaskList tasks, Ui ui, Storage storage) throws HhvrfnException {
+        final String rest = input.substring(9).trim();
+        final int byPos = rest.indexOf("/by ");
+        if (byPos < 0) {
+            throw new HhvrfnException(USAGE_DEADLINE);
+        }
+        final String desc = rest.substring(0, byPos).trim();
+        final String by = rest.substring(byPos + 4).trim();
+        if (desc.isEmpty() || by.isEmpty()) {
+            throw new HhvrfnException(ERR_DEADLINE_EMPTY);
         }
         try {
-            int idx = Integer.parseInt(parts[1]);
+            final LocalDate date = LocalDate.parse(by); // yyyy-MM-dd.
+            final Task t = new Deadline(desc, date);
+            tasks.add(t);
+            ui.showAdded(t, tasks.size());
+            storage.save(tasks.asList());
+        } catch (DateTimeParseException dtpe) {
+            throw new HhvrfnException(ERR_DATE_INVALID);
+        }
+    }
+
+    // Adds an Event and persists.
+    private static void handleEvent(String input, TaskList tasks, Ui ui, Storage storage) throws HhvrfnException {
+        final String rest = input.substring(6).trim();
+        final int fromPos = rest.indexOf("/from ");
+        final int toPos = rest.indexOf("/to ");
+        if (fromPos < 0 || toPos < 0 || toPos <= fromPos) {
+            throw new HhvrfnException(USAGE_EVENT);
+        }
+        final String desc = rest.substring(0, fromPos).trim();
+        final String from = rest.substring(fromPos + 6, toPos).trim();
+        final String to = rest.substring(toPos + 4).trim();
+        if (desc.isEmpty() || from.isEmpty() || to.isEmpty()) {
+            throw new HhvrfnException(ERR_EVENT_EMPTY);
+        }
+        final Task t = new Event(desc, from, to); // Event still uses String.
+        tasks.add(t);
+        ui.showAdded(t, tasks.size());
+        storage.save(tasks.asList());
+    }
+
+    // Deletes a task and persists.
+    private static void handleDelete(String input, TaskList tasks, Ui ui, Storage storage) throws HhvrfnException {
+        final int index = parseIndex(input);
+        ensureNotEmpty(tasks, MSG_EMPTY_LIST);
+        ensureInRange(index, tasks.size(), "Invalid index for delete. Use 1.." + tasks.size());
+        final Task removed = tasks.remove(index - 1);
+        ui.showDeleted(removed, tasks.size());
+        storage.save(tasks.asList());
+    }
+
+    // Finds tasks by keyword; no persistence. Handles both "find" and "find xxx".
+    private static void handleFind(String input, TaskList tasks, Ui ui) throws HhvrfnException {
+        if (input.equals("find")) {
+            throw new HhvrfnException(ERR_FIND_EMPTY);
+        }
+        final String keyword = input.substring(5).trim();
+        if (keyword.isEmpty()) {
+            throw new HhvrfnException(ERR_FIND_EMPTY);
+        }
+        final List<Task> matches = tasks.findByKeyword(keyword);
+        ui.showFindResults(matches);
+    }
+
+    /* ============================== Helpers ============================= */
+
+    // Parses a one-argument index command (e.g., "mark 2").
+    private static int parseIndex(String input) throws HhvrfnException {
+        final String[] parts = input.trim().split("\\s+");
+        if (parts.length != 2) {
+            throw new HhvrfnException(USAGE_MUTATE_INDEX);
+        }
+        try {
+            final int idx = Integer.parseInt(parts[1]);
             if (idx <= 0) {
                 throw new HhvrfnException("Index must be a positive integer.");
             }
@@ -139,12 +209,14 @@ public final class Parser {
         }
     }
 
+    // Throws if the task list is empty.
     private static void ensureNotEmpty(TaskList tasks, String message) throws HhvrfnException {
         if (tasks.isEmpty()) {
             throw new HhvrfnException(message);
         }
     }
 
+    // Throws if a one-based index is outside [1, size].
     private static void ensureInRange(int oneBasedIndex, int size, String message) throws HhvrfnException {
         if (oneBasedIndex < 1 || oneBasedIndex > size) {
             throw new HhvrfnException(message);
