@@ -1,3 +1,5 @@
+package hhvrfn;
+
 /**
  * Represents domain-specific errors in the Hhvrfn chatbot.
  */
