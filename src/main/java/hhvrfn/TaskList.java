@@ -63,6 +63,21 @@ public class TaskList {
     }
 
     /**
+     * Adds multiple tasks using varargs.
+     * This is an overload and does not break the existing API.
+     *
+     * @param tasksToAdd tasks to add; null or empty is a no-op.
+     */
+    public void add(Task... tasksToAdd) {
+        if (tasksToAdd == null || tasksToAdd.length == 0) {
+            return;
+        }
+        for (Task t : tasksToAdd) {
+            tasks.add(t);
+        }
+    }
+
+    /**
      * Removes and returns a task at zero-based index.
      *
      * @param indexZeroBased index of the task to remove
