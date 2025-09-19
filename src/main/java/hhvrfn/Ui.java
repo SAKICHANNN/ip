@@ -136,4 +136,16 @@ public class Ui {
         }
         showLine();
     }
+
+    /**
+     * Shows the "rescheduled/snoozed" feedback.
+     *
+     * @param task The task that has been rescheduled.
+     */
+    public void showSnoozed(Task task) {
+        showLine();
+        System.out.println(" OK, I've rescheduled this task:");
+        System.out.println("   " + task);
+        showLine();
+    }
 }
