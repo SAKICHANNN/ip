@@ -2,6 +2,7 @@ package hhvrfn;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
 /**
  * Parses and executes a single user command against the given model/components.
@@ -103,6 +104,16 @@ public final class Parser {
             Task removed = tasks.remove(index - 1);
             ui.showDeleted(removed, tasks.size());
             storage.save(tasks.asList());
+            return;
+        } else if (input.equals("find")) {
+            throw new HhvrfnException("Find needs a non-empty keyword.");
+        } else if (input.startsWith("find ")) {
+            String keyword = input.substring(5).trim();
+            if (keyword.isEmpty()) {
+                throw new HhvrfnException("Find needs a non-empty keyword.");
+            }
+            List<Task> matches = tasks.findByKeyword(keyword);
+            ui.showFindResults(matches);
             return;
         }
 
