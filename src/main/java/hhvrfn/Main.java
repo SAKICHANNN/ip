@@ -1,5 +1,7 @@
 package hhvrfn;
 
+import java.util.ArrayList;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -18,8 +20,28 @@ import javafx.stage.Stage;
  */
 public class Main extends Application {
 
-    private final TaskList taskList = new TaskList();
+    private final TaskList taskList;
     private final Storage storage = new Storage("./data/hhvrfn.txt");
+    private String loadingErrorMessage = null;
+
+    /**
+     * Constructs the Main application with error handling for data loading.
+     */
+    public Main() {
+        Logger.info("Initializing GUI application");
+        // Initialize TaskList with error handling for data loading
+        TaskList tempTaskList;
+        try {
+            ArrayList<Task> loadedTasks = storage.load();
+            tempTaskList = new TaskList(loadedTasks);
+        } catch (HhvrfnException e) {
+            // If loading fails, start with empty task list and remember the error
+            Logger.error("Failed to load data during GUI initialization", new Exception(e.getMessage()));
+            tempTaskList = new TaskList();
+            loadingErrorMessage = e.getMessage();
+        }
+        this.taskList = tempTaskList;
+    }
 
     @Override
     public void start(Stage stage) {
@@ -43,6 +65,7 @@ public class Main extends Application {
 
             // --- handle "bye" here (same logic as CLI loop) ---
             if ("bye".equals(text)) {
+                Logger.info("User initiated application exit");
                 ui.showFarewell();
                 Platform.exit();
                 return;
@@ -68,6 +91,11 @@ public class Main extends Application {
         stage.show();
 
         ui.showGreeting();
+
+        // Show loading error if there was one
+        if (loadingErrorMessage != null) {
+            ui.showLoadingError(loadingErrorMessage);
+        }
     }
 
     public static void main(String[] args) {

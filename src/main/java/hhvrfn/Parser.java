@@ -16,10 +16,22 @@ public final class Parser {
             "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, find, snooze, bye.";
     private static final String MSG_EMPTY_LIST = "Your list is empty.";
     private static final String ERR_TODO_EMPTY = "Todo needs a non-empty description.";
+    private static final String ERR_TODO_TOO_LONG =
+            "Todo description is too long. Please keep it under 1000 characters.";
     private static final String ERR_FIND_EMPTY = "Find needs a non-empty keyword.";
+    private static final String ERR_FIND_TOO_LONG =
+            "Search keyword is too long. Please keep it under 100 characters.";
     private static final String ERR_DEADLINE_EMPTY = "Deadline description and /by must be non-empty.";
+    private static final String ERR_DEADLINE_TOO_LONG =
+            "Deadline description is too long. Please keep it under 1000 characters.";
     private static final String ERR_EVENT_EMPTY = "Event description, /from, and /to must be non-empty.";
+    private static final String ERR_EVENT_TOO_LONG =
+            "Event description is too long. Please keep it under 1000 characters.";
     private static final String ERR_DATE_INVALID = "Invalid date. Use yyyy-MM-dd, e.g., 2019-10-15.";
+    private static final String ERR_DATE_TOO_OLD = "Date is too far in the past. Please use a date after 1900-01-01.";
+    private static final String ERR_DATE_TOO_FUTURE =
+            "Date is too far in the future. Please use a date before 2100-01-01.";
+    private static final String ERR_INPUT_TOO_LONG = "Command is too long. Please keep it under 2000 characters.";
 
     private static final String USAGE_MUTATE_INDEX = "Usage: mark|unmark|delete <positive integer>";
     private static final String USAGE_DEADLINE = "Usage: deadline DESCRIPTION /by yyyy-MM-dd";
@@ -47,6 +59,16 @@ public final class Parser {
             // Ignore empty lines.
             return;
         }
+
+        // Check for excessively long input to prevent potential issues
+        if (input.length() > 2000) {
+            Logger.warn("User input too long: " + input.length() + " characters");
+            throw new HhvrfnException(ERR_INPUT_TOO_LONG);
+        }
+
+        // Normalize whitespace to handle edge cases with multiple spaces/tabs
+        input = input.trim().replaceAll("\\s+", " ");
+        Logger.info("Processing command: " + input);
 
         if (input.equals("list")) {
             handleList(tasks, ui);
@@ -84,7 +106,12 @@ public final class Parser {
             handleSnooze(input, tasks, ui, storage);
             return;
         }
+        if (input.equals("help")) {
+            handleHelp(ui);
+            return;
+        }
 
+        Logger.warn("Unknown command received: " + input);
         throw new HhvrfnException(MSG_UNKNOWN);
     }
 
@@ -93,6 +120,11 @@ public final class Parser {
     // Shows the full list; no persistence.
     private static void handleList(TaskList tasks, Ui ui) {
         ui.showList(tasks);
+    }
+
+    // Shows help information; no persistence.
+    private static void handleHelp(Ui ui) {
+        ui.showHelp();
     }
 
     // Marks a task as done and persists.
@@ -123,6 +155,9 @@ public final class Parser {
         if (desc.isEmpty()) {
             throw new HhvrfnException(ERR_TODO_EMPTY);
         }
+        if (desc.length() > 1000) {
+            throw new HhvrfnException(ERR_TODO_TOO_LONG);
+        }
         final Task t = new Todo(desc);
         tasks.add(t);
         ui.showAdded(t, tasks.size());
@@ -141,8 +176,12 @@ public final class Parser {
         if (desc.isEmpty() || by.isEmpty()) {
             throw new HhvrfnException(ERR_DEADLINE_EMPTY);
         }
+        if (desc.length() > 1000) {
+            throw new HhvrfnException(ERR_DEADLINE_TOO_LONG);
+        }
         try {
             final LocalDate date = LocalDate.parse(by); // yyyy-MM-dd.
+            validateDateRange(date);
             final Task t = new Deadline(desc, date);
             tasks.add(t);
             ui.showAdded(t, tasks.size());
@@ -165,6 +204,9 @@ public final class Parser {
         final String to = rest.substring(toPos + 4).trim();
         if (desc.isEmpty() || from.isEmpty() || to.isEmpty()) {
             throw new HhvrfnException(ERR_EVENT_EMPTY);
+        }
+        if (desc.length() > 1000) {
+            throw new HhvrfnException(ERR_EVENT_TOO_LONG);
         }
         final Task t = new Event(desc, from, to); // Event still uses String.
         tasks.add(t);
@@ -190,6 +232,9 @@ public final class Parser {
         final String keyword = input.substring(5).trim();
         if (keyword.isEmpty()) {
             throw new HhvrfnException(ERR_FIND_EMPTY);
+        }
+        if (keyword.length() > 100) {
+            throw new HhvrfnException(ERR_FIND_TOO_LONG);
         }
         final List<Task> matches = tasks.findByKeyword(keyword);
         ui.showFindResults(matches);
@@ -230,6 +275,7 @@ public final class Parser {
 
         try {
             final LocalDate newDate = LocalDate.parse(dateStr); // yyyy-MM-dd
+            validateDateRange(newDate);
             final Deadline d = (Deadline) task;
             d.reschedule(newDate);
             ui.showSnoozed(d);
@@ -242,18 +288,42 @@ public final class Parser {
 
     /* ============================== Helpers ============================= */
 
+    // Validates that a date is within reasonable bounds
+    private static void validateDateRange(LocalDate date) throws HhvrfnException {
+        LocalDate minDate = LocalDate.of(1900, 1, 1);
+        LocalDate maxDate = LocalDate.of(2100, 1, 1);
+
+        if (date.isBefore(minDate)) {
+            throw new HhvrfnException(ERR_DATE_TOO_OLD);
+        }
+        if (date.isAfter(maxDate)) {
+            throw new HhvrfnException(ERR_DATE_TOO_FUTURE);
+        }
+    }
+
     // Parses a one-argument index command (e.g., "mark 2").
     private static int parseIndex(String input) throws HhvrfnException {
         final String[] parts = input.trim().split("\\s+");
         if (parts.length != 2) {
             throw new HhvrfnException(USAGE_MUTATE_INDEX);
         }
+
+        String indexStr = parts[1];
+
+        // Check for excessively long index strings
+        if (indexStr.length() > 10) {
+            throw new HhvrfnException("Index is too long. Please use a number between 1 and 2,147,483,647.");
+        }
+
         try {
-            final int idx = Integer.parseInt(parts[1]);
+            final long idx = Long.parseLong(indexStr);
             if (idx <= 0) {
                 throw new HhvrfnException("Index must be a positive integer.");
             }
-            return idx;
+            if (idx > Integer.MAX_VALUE) {
+                throw new HhvrfnException("Index is too large. Please use a number between 1 and 2,147,483,647.");
+            }
+            return (int) idx;
         } catch (NumberFormatException nfe) {
             throw new HhvrfnException("Index must be a positive integer.");
         }
