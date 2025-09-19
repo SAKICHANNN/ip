@@ -41,3 +41,9 @@
 [2025-09-20 02:24:50] ERROR: Command processing error: Invalid index for mark. Use 1..2
 [2025-09-20 02:24:50] INFO: User initiated application exit
 [2025-09-20 02:24:50] INFO: CLI application ended
+[2025-09-20 02:50:44] INFO: Processing command: delete 1
+[2025-09-20 02:50:44] INFO: Processing command: todo read book
+[2025-09-20 02:50:44] INFO: Processing command: mark 1
+[2025-09-20 02:50:48] INFO: Initializing GUI application
+[2025-09-20 02:50:48] INFO: Loading tasks from: ./data/hhvrfn.txt
+[2025-09-20 02:50:48] INFO: Successfully loaded 2 tasks
