@@ -21,6 +21,9 @@ public final class Parser {
      * @throws HhvrfnException For user errors or I/O errors reported in a user-friendly way.
      */
     public static void process(String input, TaskList tasks, Ui ui, Storage storage) throws HhvrfnException {
+        assert tasks != null && ui != null && storage != null
+            : "Parser.process(): collaborators must be non-null";
+
         if (input == null || input.trim().isEmpty()) {
             return; // ignore empty lines
         }
