@@ -1,6 +1,7 @@
 package hhvrfn;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Wraps the list of tasks and provides basic operations.
@@ -78,5 +79,25 @@ public class TaskList {
      */
     public ArrayList<Task> asList() {
         return tasks;
+    }
+
+    /**
+     * Returns tasks whose string representation contains the given keyword
+     * (case-insensitive). Matching is done against the task's display text,
+     * which includes the description.
+     *
+     * @param keyword keyword to search for (non-empty)
+     * @return a new list containing matching tasks in original order
+     */
+    public List<Task> findByKeyword(String keyword) {
+        String needle = keyword.toLowerCase();
+        List<Task> result = new ArrayList<>();
+        for (int i = 0; i < tasks.size(); i++) {
+            Task t = tasks.get(i);
+            if (t.toString().toLowerCase().contains(needle)) {
+                result.add(t);
+            }
+        }
+        return result;
     }
 }

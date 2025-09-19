@@ -1,5 +1,6 @@
 package hhvrfn;
 
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -120,5 +121,19 @@ public class Ui {
      */
     public void showLoadingError(String message) {
         showError(message);
+    }
+
+    /**
+     * Shows matching tasks for a find operation.
+     *
+     * @param matches tasks that matched the user's keyword.
+     */
+    public void showFindResults(List<Task> matches) {
+        showLine();
+        System.out.println(" Here are the matching tasks in your list:");
+        for (int i = 0; i < matches.size(); i++) {
+            System.out.println(" " + (i + 1) + ". " + matches.get(i));
+        }
+        showLine();
     }
 }
