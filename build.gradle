@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'checkstyle'
 }
 
 repositories { mavenCentral() }
@@ -23,6 +24,16 @@ application {
 shadowJar {
     archiveBaseName = "hhvrfn"
     archiveClassifier = null
+}
+
+checkstyle {
+    toolVersion = '10.12.4'
+    configFile = file('config/checkstyle/checkstyle.xml')
+}
+
+tasks.withType(Checkstyle).configureEach {
+    ignoreFailures = false
+    maxWarnings = 0
 }
 
 run { standardInput = System.in }

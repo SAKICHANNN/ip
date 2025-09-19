@@ -82,14 +82,15 @@ public class Storage {
         }
     }
 
-    // --- Format helpers: "T|1|desc", "D|0|desc|by", "E|0|desc|from-to" (we keep spaces around pipes for readability) ---
+    // --- Format helpers: "T|1|desc", "D|0|desc|by", "E|0|desc|from-to"
 
     private String serialize(Task t) {
         String done = t.getStatusIcon().equals("X") ? "1" : "0";
         if (t instanceof Deadline) {
             Deadline d = (Deadline) t;
             // persist ISO format: yyyy-MM-dd
-            return "D | " + done + " | " + d.description + " | " + d.by.format(DateTimeFormatter.ISO_LOCAL_DATE);
+            return "D | " + done + " | " + d.description + " | "
+                    + d.by.format(DateTimeFormatter.ISO_LOCAL_DATE);
         } else if (t instanceof Event) {
             Event e = (Event) t;
             return "E | " + done + " | " + e.description + " | " + e.from + " to " + e.to;
