@@ -4,38 +4,25 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
-repositories {
-    mavenCentral()
+repositories { mavenCentral() }
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(17) }
 }
 
 dependencies {
-    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.10.0'
-    testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.10.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 }
 
-test {
-    useJUnitPlatform()
-
-    testLogging {
-        events "passed", "skipped", "failed"
-
-        showExceptions true
-        exceptionFormat "full"
-        showCauses true
-        showStackTraces true
-        showStandardStreams = false
-    }
-}
+test { useJUnitPlatform() }
 
 application {
-    mainClass.set("seedu.duke.Duke")
+    mainClass = "hhvrfn.Hhvrfn"
 }
 
 shadowJar {
-    archiveBaseName = "duke"
+    archiveBaseName = "hhvrfn"
     archiveClassifier = null
 }
 
-run{
-    standardInput = System.in
-}
+run { standardInput = System.in }
