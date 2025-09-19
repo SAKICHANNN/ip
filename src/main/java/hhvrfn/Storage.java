@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
-
 /**
  * Handles persisting tasks to disk and loading them at startup.
  * Uses a simple line-based format, e.g.:

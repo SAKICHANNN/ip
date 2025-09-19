@@ -43,7 +43,7 @@ public class Task {
     public void markAsNotDone() {
         isDone = false;
     }
-    
+
     /**
      * Returns type of this task.
      */

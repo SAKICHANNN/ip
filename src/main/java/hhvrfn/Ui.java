@@ -75,7 +75,7 @@ public class Ui {
         showLine();
     }
 
-    /** 
+    /**
      * Shows the "marked done" feedback.
      */
     public void showMarked(Task task) {
@@ -85,7 +85,7 @@ public class Ui {
         showLine();
     }
 
-    /** 
+    /**
      * Shows the "marked not done" feedback. 
      */
     public void showUnmarked(Task task) {
@@ -95,7 +95,7 @@ public class Ui {
         showLine();
     }
 
-    /** 
+    /**
      * Shows the "deleted" feedback. 
      */
     public void showDeleted(Task removed, int remaining) {
@@ -106,7 +106,7 @@ public class Ui {
         showLine();
     }
 
-    /** 
+    /**
      * Shows an error message in a standard block. 
      */
     public void showError(String message) {
@@ -115,8 +115,8 @@ public class Ui {
         showLine();
     }
 
-    /** 
-     * Shows a loading/storage error message in a standard block. 
+    /**
+     * Shows a loading/storage error message in a standard block.
      */
     public void showLoadingError(String message) {
         showError(message);
