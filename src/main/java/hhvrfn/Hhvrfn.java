@@ -29,7 +29,10 @@ public class Hhvrfn {
         }
     }
 
-    /** Runs the main loop until "bye". */
+    /**
+     * Runs the main interaction loop until the user enters "bye".
+     * Continuously reads user input, processes commands, and handles errors.
+     */
     public void run() {
         ui.showGreeting();
         try (Scanner scanner = new Scanner(System.in)) {

@@ -12,16 +12,25 @@ public class Ui {
             + "What can I do for you?";
     private static final String FAREWELL = "Bye. Hope to see you again soon!";
 
+    /**
+     * Prints the divider line to standard output.
+     */
     public void showLine() {
         System.out.print(LINE);
     }
 
+    /**
+     * Shows the greeting message with divider lines.
+     */
     public void showGreeting() {
         showLine();
         System.out.println(GREETING);
         showLine();
     }
 
+    /**
+     * Shows the farewell message with divider lines.
+     */
     public void showFarewell() {
         showLine();
         System.out.println(FAREWELL);
