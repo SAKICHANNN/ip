@@ -13,7 +13,7 @@ public final class Parser {
     /* ================== Centralized messages & usages ================== */
 
     private static final String MSG_UNKNOWN =
-            "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, bye.";
+            "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, find, snooze, bye.";
     private static final String MSG_EMPTY_LIST = "Your list is empty.";
     private static final String ERR_TODO_EMPTY = "Todo needs a non-empty description.";
     private static final String ERR_FIND_EMPTY = "Find needs a non-empty keyword.";
@@ -24,6 +24,7 @@ public final class Parser {
     private static final String USAGE_MUTATE_INDEX = "Usage: mark|unmark|delete <positive integer>";
     private static final String USAGE_DEADLINE = "Usage: deadline DESCRIPTION /by yyyy-MM-dd";
     private static final String USAGE_EVENT = "Usage: event DESCRIPTION /from FROM /to TO";
+    private static final String USAGE_SNOOZE = "Usage: snooze INDEX /to yyyy-MM-dd";
 
     /** Utility class; no instantiation. */
     private Parser() { }
@@ -77,6 +78,10 @@ public final class Parser {
         }
         if (input.equals("find") || input.startsWith("find ")) {
             handleFind(input, tasks, ui);
+            return;
+        }
+        if (input.equals("snooze") || input.startsWith("snooze ")) {
+            handleSnooze(input, tasks, ui, storage);
             return;
         }
 
@@ -189,6 +194,51 @@ public final class Parser {
         final List<Task> matches = tasks.findByKeyword(keyword);
         ui.showFindResults(matches);
     }
+
+    // Snoozes (reschedules) a Deadline and persists.
+    private static void handleSnooze(String input, TaskList tasks, Ui ui, Storage storage) throws HhvrfnException {
+        // Format: snooze INDEX /to yyyy-MM-dd
+        final String rest = input.length() == 6 ? "" : input.substring(7).trim(); // after "snooze"
+        if (rest.isEmpty()) {
+            throw new HhvrfnException(USAGE_SNOOZE);
+        }
+
+        // split first token as index, remaining as "/to ..."
+        final String[] parts = rest.split("\\s+", 2);
+        if (parts.length < 2) {
+            throw new HhvrfnException(USAGE_SNOOZE);
+        }
+
+        final int index = parseIndex("mark " + parts[0]);
+        ensureNotEmpty(tasks, MSG_EMPTY_LIST);
+        ensureInRange(index, tasks.size(), "Invalid index for snooze. Use 1.." + tasks.size());
+
+        final String afterIndex = parts[1].trim();
+        final int toPos = afterIndex.indexOf("/to ");
+        if (toPos < 0) {
+            throw new HhvrfnException(USAGE_SNOOZE);
+        }
+        final String dateStr = afterIndex.substring(toPos + 4).trim();
+        if (dateStr.isEmpty()) {
+            throw new HhvrfnException(USAGE_SNOOZE);
+        }
+
+        final Task task = tasks.get(index - 1);
+        if (!(task instanceof Deadline)) {
+            throw new HhvrfnException("Only deadlines can be snoozed/rescheduled.");
+        }
+
+        try {
+            final LocalDate newDate = LocalDate.parse(dateStr); // yyyy-MM-dd
+            final Deadline d = (Deadline) task;
+            d.reschedule(newDate);
+            ui.showSnoozed(d);
+            storage.save(tasks.asList());
+        } catch (DateTimeParseException dtpe) {
+            throw new HhvrfnException(ERR_DATE_INVALID);
+        }
+    }
+
 
     /* ============================== Helpers ============================= */
 

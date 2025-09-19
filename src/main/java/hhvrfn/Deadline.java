@@ -21,6 +21,16 @@ public class Deadline extends Task {
     }
 
     /**
+     * Reschedules this deadline to a new date.
+     *
+     * @param newDate New due date (non-null).
+     */
+    public void reschedule(LocalDate newDate) {
+        assert newDate != null : "Deadline.reschedule: newDate must be non-null";
+        this.by = newDate;
+    }
+
+    /**
      * Returns the string representation of this deadline task.
      *
      * @return The string representation including the due time.
