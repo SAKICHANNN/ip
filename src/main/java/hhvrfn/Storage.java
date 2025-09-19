@@ -85,14 +85,17 @@ public class Storage {
     // --- Format helpers: "T|1|desc", "D|0|desc|by", "E|0|desc|from-to"
 
     private String serialize(Task t) {
+        assert t != null : "Storage.serialize(): task must be non-null";
         String done = t.getStatusIcon().equals("X") ? "1" : "0";
         if (t instanceof Deadline) {
             Deadline d = (Deadline) t;
+            assert d.by != null : "Storage.serialize(): deadline 'by' is null";
             // persist ISO format: yyyy-MM-dd
             return "D | " + done + " | " + d.description + " | "
                     + d.by.format(DateTimeFormatter.ISO_LOCAL_DATE);
         } else if (t instanceof Event) {
             Event e = (Event) t;
+            assert e.from != null && e.to != null : "Storage.serialize(): event 'from/to' is null";
             return "E | " + done + " | " + e.description + " | " + e.from + " to " + e.to;
         } else { // Todo or legacy Task treated as TODO
             return "T | " + done + " | " + t.description;

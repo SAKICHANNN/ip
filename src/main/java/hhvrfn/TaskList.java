@@ -50,6 +50,8 @@ public class TaskList {
      * @return the task at the given index
      */
     public Task get(int indexZeroBased) {
+        assert indexZeroBased >= 0 && indexZeroBased < tasks.size()
+            : "TaskList.get(): index out of bounds after prior validation";
         return tasks.get(indexZeroBased);
     }
 
@@ -73,6 +75,7 @@ public class TaskList {
             return;
         }
         for (Task t : tasksToAdd) {
+            assert t != null : "TaskList.add(): null task element";
             tasks.add(t);
         }
     }
@@ -84,6 +87,8 @@ public class TaskList {
      * @return the removed task
      */
     public Task remove(int indexZeroBased) {
+        assert indexZeroBased >= 0 && indexZeroBased < tasks.size()
+            : "TaskList.remove(): index out of bounds after prior validation";
         return tasks.remove(indexZeroBased);
     }
 

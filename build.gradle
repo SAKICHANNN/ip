@@ -25,6 +25,7 @@ test { useJUnitPlatform() }
 
 application {
     mainClass = 'hhvrfn.Launcher'
+    applicationDefaultJvmArgs = ['-ea']
 }
 
 shadowJar {
