@@ -1,3 +1,5 @@
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -74,14 +76,19 @@ public class Hhvrfn {
     }
 
     private static void addDeadline(String description, String by) throws HhvrfnException {
-        Deadline t = new Deadline(description, by);
-        tasks.add(t);
-        printLine();
-        System.out.println(" Got it. I've added this task:");
-        System.out.println("   " + t);
-        System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
-        printLine();
-        storage.save(tasks);
+        try {
+            LocalDate date = LocalDate.parse(by); // expect yyyy-MM-dd
+            Deadline t = new Deadline(description, date);
+            tasks.add(t);
+            printLine();
+            System.out.println(" Got it. I've added this task:");
+            System.out.println("   " + t);
+            System.out.println(" Now you have " + tasks.size() + " tasks in the list.");
+            printLine();
+            storage.save(tasks);
+        } catch (DateTimeParseException dtpe) {
+            throw new HhvrfnException("Invalid date. Use yyyy-MM-dd, e.g., 2019-10-15.");
+        }
     }
 
     private static void addEvent(String description, String from, String to) throws HhvrfnException {
@@ -169,11 +176,9 @@ public class Hhvrfn {
             return;
         }
 
-        if (!input.contains(" ")) {
-            throw new HhvrfnException(
-                    "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, bye.");
-        }
-
+        // Unknown input: commands only
+        throw new HhvrfnException(
+                "Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, bye.");
     }
 
     private static int parseIndex(String input) throws HhvrfnException {
