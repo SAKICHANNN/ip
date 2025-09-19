@@ -1,0 +1,43 @@
+[2025-09-20 02:16:35] INFO: Processing command: delete 1
+[2025-09-20 02:16:35] INFO: Processing command: todo read book
+[2025-09-20 02:16:35] INFO: Processing command: mark 1
+[2025-09-20 02:21:37] INFO: Processing command: delete 1
+[2025-09-20 02:21:37] INFO: Processing command: todo read book
+[2025-09-20 02:21:37] INFO: Processing command: mark 1
+[2025-09-20 02:24:05] INFO: Processing command: delete 1
+[2025-09-20 02:24:05] INFO: Processing command: todo read book
+[2025-09-20 02:24:05] INFO: Processing command: mark 1
+[2025-09-20 02:24:32] INFO: Initializing CLI application with data file: ./data/hhvrfn.txt
+[2025-09-20 02:24:32] INFO: Loading tasks from: ./data/hhvrfn.txt
+[2025-09-20 02:24:32] INFO: Successfully loaded 1 tasks
+[2025-09-20 02:24:32] INFO: Starting CLI application loop
+[2025-09-20 02:24:32] INFO: Processing command: invalidcommand
+[2025-09-20 02:24:32] WARN: Unknown command received: invalidcommand
+[2025-09-20 02:24:32] ERROR: Command processing error: Unknown command. Try: list, todo, deadline, event, mark, unmark, delete, find, snooze, bye.
+[2025-09-20 02:24:32] INFO: Processing command: todo
+[2025-09-20 02:24:32] ERROR: Command processing error: Todo needs a non-empty description.
+[2025-09-20 02:24:32] INFO: Processing command: todo a very long description that exceeds the 1000 character limit by repeating this phrase over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over and over
+[2025-09-20 02:24:32] ERROR: Command processing error: Todo description is too long. Please keep it under 1000 characters.
+[2025-09-20 02:24:32] INFO: Processing command: help
+[2025-09-20 02:24:32] INFO: User initiated application exit
+[2025-09-20 02:24:32] INFO: CLI application ended
+[2025-09-20 02:24:50] INFO: Initializing CLI application with data file: ./data/hhvrfn.txt
+[2025-09-20 02:24:50] INFO: Loading tasks from: ./data/hhvrfn.txt
+[2025-09-20 02:24:50] INFO: Successfully loaded 1 tasks
+[2025-09-20 02:24:50] INFO: Starting CLI application loop
+[2025-09-20 02:24:50] INFO: Processing command: deadline test /by invalid-date
+[2025-09-20 02:24:50] ERROR: Command processing error: Invalid date. Use yyyy-MM-dd, e.g., 2019-10-15.
+[2025-09-20 02:24:50] INFO: Processing command: deadline test /by 1800-01-01
+[2025-09-20 02:24:50] ERROR: Command processing error: Date is too far in the past. Please use a date after 1900-01-01.
+[2025-09-20 02:24:50] INFO: Processing command: deadline test /by 2200-01-01
+[2025-09-20 02:24:50] ERROR: Command processing error: Date is too far in the future. Please use a date before 2100-01-01.
+[2025-09-20 02:24:50] INFO: Processing command: deadline test /by 2024-12-25
+[2025-09-20 02:24:50] INFO: Saving 2 tasks to: ./data/hhvrfn.txt
+[2025-09-20 02:24:50] INFO: Successfully saved tasks to file
+[2025-09-20 02:24:50] INFO: Processing command: list
+[2025-09-20 02:24:50] INFO: Processing command: mark abc
+[2025-09-20 02:24:50] ERROR: Command processing error: Index must be a positive integer.
+[2025-09-20 02:24:50] INFO: Processing command: mark 999
+[2025-09-20 02:24:50] ERROR: Command processing error: Invalid index for mark. Use 1..2
+[2025-09-20 02:24:50] INFO: User initiated application exit
+[2025-09-20 02:24:50] INFO: CLI application ended

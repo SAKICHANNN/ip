@@ -3,7 +3,10 @@ package hhvrfn;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -37,6 +40,7 @@ public class Storage {
      * @throws HhvrfnException If an unrecoverable I/O error occurs.
      */
     public ArrayList<Task> load() throws HhvrfnException {
+        Logger.info("Loading tasks from: " + dataFile);
         ArrayList<Task> result = new ArrayList<>();
         try {
             ensureFileExists();
@@ -46,9 +50,25 @@ public class Storage {
                     result.add(t);
                 }
             }
+            Logger.info("Successfully loaded " + result.size() + " tasks");
             return result;
+        } catch (AccessDeniedException e) {
+            Logger.error("Failed to load data - permission denied", e);
+            throw new HhvrfnException("Cannot load data: Permission denied. "
+                    + "Please check if you have read access to the file: " + dataFile);
+        } catch (NoSuchFileException e) {
+            Logger.warn("Data file not found, will create new file: " + dataFile);
+            throw new HhvrfnException("Cannot load data: Data file not found at expected location: "
+                    + dataFile + ". A new file will be created when you add tasks.");
+        } catch (FileSystemException e) {
+            Logger.error("File system error during load", e);
+            throw new HhvrfnException("Cannot load data: File system error. "
+                    + "The storage location might be on a read-only drive or network location is unavailable: "
+                    + e.getMessage());
         } catch (IOException e) {
-            throw new HhvrfnException("Failed to load data: " + e.getMessage());
+            Logger.error("I/O error during load", e);
+            throw new HhvrfnException("Cannot load data: An unexpected error occurred while reading the file. "
+                    + "The file might be corrupted or in use by another program: " + e.getMessage());
         }
     }
 
@@ -59,6 +79,7 @@ public class Storage {
      * @throws HhvrfnException If an I/O error occurs.
      */
     public void save(ArrayList<Task> tasks) throws HhvrfnException {
+        Logger.info("Saving " + tasks.size() + " tasks to: " + dataFile);
         try {
             ensureFileExists();
             try (BufferedWriter bw = Files.newBufferedWriter(dataFile, StandardCharsets.UTF_8)) {
@@ -67,18 +88,52 @@ public class Storage {
                     bw.newLine();
                 }
             }
+            Logger.info("Successfully saved tasks to file");
+        } catch (AccessDeniedException e) {
+            Logger.error("Failed to save data - permission denied", e);
+            throw new HhvrfnException("Cannot save data: Permission denied. "
+                    + "Please check if you have write access to the file location: " + dataFile);
+        } catch (FileSystemException e) {
+            String message = e.getMessage();
+            if (message != null && message.toLowerCase().contains("space")) {
+                Logger.error("Failed to save data - insufficient disk space", e);
+                throw new HhvrfnException("Cannot save data: Not enough disk space available. "
+                        + "Please free up some space and try again.");
+            } else {
+                Logger.error("File system error during save", e);
+                throw new HhvrfnException("Cannot save data: File system error. "
+                        + "The storage location might be on a read-only drive or network location is unavailable: "
+                        + message);
+            }
         } catch (IOException e) {
-            throw new HhvrfnException("Failed to save data: " + e.getMessage());
+            Logger.error("I/O error during save", e);
+            throw new HhvrfnException("Cannot save data: An unexpected error occurred while writing to the file. "
+                    + "The file might be in use by another program or the storage device might have issues: "
+                    + e.getMessage());
         }
     }
 
     private void ensureFileExists() throws IOException {
         Path parent = dataFile.getParent();
         if (parent != null && !Files.exists(parent)) {
-            Files.createDirectories(parent);
+            try {
+                Files.createDirectories(parent);
+            } catch (AccessDeniedException e) {
+                throw new IOException("Cannot create directory: Permission denied for " + parent, e);
+            } catch (FileSystemException e) {
+                throw new IOException("Cannot create directory: File system error for " + parent + ": "
+                        + e.getMessage(), e);
+            }
         }
         if (!Files.exists(dataFile)) {
-            Files.createFile(dataFile);
+            try {
+                Files.createFile(dataFile);
+            } catch (AccessDeniedException e) {
+                throw new IOException("Cannot create file: Permission denied for " + dataFile, e);
+            } catch (FileSystemException e) {
+                throw new IOException("Cannot create file: File system error for " + dataFile + ": "
+                        + e.getMessage(), e);
+            }
         }
     }
 
